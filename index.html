@@ -112,9 +112,8 @@
     <main id="view-portfolio" class="view-section"><h2 style="margin-top: 0;">💼 Mon Portefeuille (Local)</h2><div id="portfolio-content"></div></main>
 
     <script>
-      // ⚠️ REMPLACE CETTE LIGNE PAR L'URL QUE GOOGLE APPS SCRIPT T'A DONNÉE ⚠️
+      // ⚠️ L'URL  GOOGLE APPS SCRIPT ⚠️
       const API_URL = "https://script.google.com/macros/s/AKfycby7gE9OyUD-gSm0z-gqaZr3_wU1E5X4Md5yYQIoecujQ0J3vXBg6HxS07w047PIqe9qPw/exec";
-
       let allData = [];
       let chartInstances = {}; 
       let isDarkMode = false;
@@ -123,7 +122,6 @@
 
       window.onload = () => fetchData();
 
-      // NOUVEAU : On utilise Fetch API (Javascript Standard) au lieu de google.script.run
       function fetchData() {
         document.getElementById('global-loader').style.display = 'block';
         const period = document.getElementById('periodSelect').value;
@@ -165,7 +163,8 @@
 
       function renderCurrentView() {
         const query = document.getElementById('globalSearch').value.toLowerCase();
-        const fData = allData.filter(i => i.ticker.toLowerCase().includes(query) || i.sigle.toLowerCase().includes(query));
+        // 
+        const fData = allData.filter(i => i.nom.toLowerCase().includes(query) || i.sigle.toLowerCase().includes(query));
         if (currentViewId === 'topflop') {
           renderCardsHTML(fData.slice(0, 5), 'top5-container', 'top');
           renderCardsHTML(fData.length > 5 ? fData.slice(-5).reverse() : [], 'flop5-container', 'flop');
@@ -223,10 +222,11 @@
             totalSpent += realCost;
 
             if (sharesToBuy > 0) {
-                proposedPortfolio.push({ sigle: item.sigle, nom: item.ticker, shares: sharesToBuy, buyPrice: item.currentPrice, total: realCost });
+                // 
+                proposedPortfolio.push({ sigle: item.sigle, nom: item.nom, shares: sharesToBuy, buyPrice: item.currentPrice, total: realCost });
                 htmlCards += `
                 <div class="card">
-                  <div class="header"><span class="ticker">${item.ticker}</span></div>
+                  <div class="header"><span class="ticker">${item.nom}</span></div>
                   <ul><li>Cours : <strong>${item.currentPrice} FCFA</strong></li><li>Dividende : <strong style="color:#38a169">${item.dividend}%</strong></li><li>Alloué : <strong style="color:#3182ce;">${sharesToBuy} actions</strong></li></ul>
                 </div>`;
             }
@@ -236,7 +236,6 @@
         }, 500);
       }
 
-      // NOUVEAU : Sauvegarde ultra rapide via localStorage (Totalement anonyme et sans Google Auth)
       function saveMyPortfolio() {
         document.getElementById('advisor-result').innerHTML = '<div class="loader">Sauvegarde sur votre navigateur...</div>';
         localStorage.setItem('brvm_portfolio', JSON.stringify(proposedPortfolio));
@@ -302,7 +301,8 @@
           const canvasId = `chart-${prefix}-${item.sigle}`;
           const card = document.createElement('div');
           card.className = 'card';
-          card.innerHTML = `<div class="header"><span class="ticker">${item.ticker} <span style="font-size:0.8em; font-weight:normal; color:var(--text-muted);">(${item.sigle}) | RSI: ${currentRsi.toFixed(0)} - ${rsiText}</span></span><span class="score ${scoreClass}">${item.score}/10</span></div><div class="argument">${item.argument}</div><div class="chart-container"><canvas id="${canvasId}"></canvas></div>`;
+          //
+          card.innerHTML = `<div class="header"><span class="ticker">${item.nom} <span style="font-size:0.8em; font-weight:normal; color:var(--text-muted);">(${item.sigle}) | RSI: ${currentRsi.toFixed(0)} - ${rsiText}</span></span><span class="score ${scoreClass}">${item.score}/10</span></div><div class="argument">${item.argument}</div><div class="chart-container"><canvas id="${canvasId}"></canvas></div>`;
           container.appendChild(card);
 
           if(chartInstances[canvasId]) chartInstances[canvasId].destroy();
