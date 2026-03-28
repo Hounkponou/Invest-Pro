@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BRVM Pro - Plateforme de Trading</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      :root {
+        --bg-color: #f0f2f5; --text-color: #333; --text-muted: #718096; --card-bg: #fff;
+        --header-color: #1a365d; --border-color: #cbd5e0; --input-bg: #fff; --grid-color: #e2e8f0;
+        --nav-bg: #1a365d; --nav-text: #fff; --primary: #3182ce;
+      }
+      body.dark-mode {
+        --bg-color: #1a202c; --text-color: #e2e8f0; --text-muted: #a0aec0; --card-bg: #2d3748;
+        --header-color: #63b3ed; --border-color: #4a5568; --input-bg: #4a5568; --grid-color: #4a5568;
+        --nav-bg: #112240; --nav-text: #e2e8f0; --primary: #63b3ed;
+      }
+      body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; transition: 0.3s; }
+      nav { background-color: var(--nav-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top:0; z-index: 1000; }
+      .nav-brand { color: var(--nav-text); font-size: 1.5em; font-weight: bold; cursor: pointer; }
+      .nav-links { display: flex; gap: 10px; flex-wrap: wrap;}
+      .nav-btn { background: none; border: none; color: var(--nav-text); font-size: 1em; cursor: pointer; padding: 8px 12px; border-radius: 5px; transition: 0.2s; font-weight: 500;}
+      .nav-btn:hover, .nav-btn.active { background-color: rgba(255,255,255,0.2); }
+      .theme-toggle { background: transparent; border: 1px solid var(--nav-text); color: var(--nav-text); padding: 5px 10px; border-radius: 15px; cursor: pointer; }
+      .btn-advisor { background-color: #dd6b20; font-weight: bold;}
+      .btn-advisor:hover, .btn-advisor.active { background-color: #c05621; }
+      .btn-portfolio { background-color: #38a169; font-weight: bold;} 
+      .global-controls { background-color: var(--card-bg); padding: 10px 20px; display: none; justify-content: center; gap: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 999; border-bottom: 1px solid var(--border-color);}
+      .global-controls input, .global-controls select { padding: 10px 15px; border: 1px solid var(--border-color); border-radius: 20px; background: var(--input-bg); color: var(--text-color); outline: none; transition: 0.2s;}
+      .global-controls input:focus, .global-controls select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(49,130,206,0.2); }
+      #globalSearch { flex-grow: 1; max-width: 400px; }
+      .view-section { display: none; padding: 30px 20px; max-width: 1200px; margin: 0 auto; min-height: 80vh;}
+      .view-section.active { display: block; animation: fadeIn 0.4s; }
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+      .hero { text-align: center; padding: 60px 20px; }
+      .hero h1 { font-size: 3em; color: var(--primary); margin-bottom: 10px; }
+      .hero p { font-size: 1.2em; color: var(--text-muted); max-width: 600px; margin: 0 auto 30px; }
+      .btn-primary { background-color: var(--primary); color: white; border: none; padding: 15px 30px; font-size: 1.2em; border-radius: 30px; cursor: pointer; transition: 0.3s; }
+      h2 { color: var(--header-color); border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-top: 20px; margin-bottom: 20px;}
+      .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+      @media (max-width: 850px) { .grid-2 { grid-template-columns: 1fr; } }
+      .sector-selector-container { text-align: center; margin-bottom: 30px; padding: 20px; background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color);}
+      .sector-selector-container select { font-size: 1.2em; padding: 12px 20px; border-radius: 8px; border: 2px solid var(--primary); background: var(--input-bg); color: var(--text-color);}
+      .advisor-form { background: var(--card-bg); padding: 30px; border-radius: 10px; border: 1px solid var(--border-color); display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; margin-bottom: 30px;}
+      .form-group { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; min-width: 200px;}
+      .form-group label { font-weight: bold; color: var(--header-color); }
+      .form-group input, .form-group select { padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-color);}
+      .advisor-btn { background-color: #dd6b20; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; height: 46px;}
+      .save-btn { background-color: #38a169; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top:20px; width: 100%;}
+      .summary-box { background: var(--primary); color: white; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px; font-size: 1.2em;}
+      .summary-box span { font-weight: bold; font-size: 1.4em; }
+      .card { background: var(--card-bg); padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 6px solid var(--primary); margin-bottom: 20px;}
+      .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;}
+      .ticker { font-size: 1.2em; font-weight: bold; }
+      .score { font-size: 1.2em; font-weight: bold; padding: 5px 10px; border-radius: 5px; }
+      .score-high { background-color: #276749; color: #c6f6d5; }
+      .score-mid { background-color: #975a16; color: #fefcbf; }
+      .score-low { background-color: #9b2c2c; color: #fed7d7; }
+      .argument { font-size: 0.9em; line-height: 1.5; color: var(--text-muted); }
+      .chart-container { position: relative; height: 180px; width: 100%; margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 10px;}
+      .loader { text-align: center; font-size: 1.2em; color: var(--text-muted); padding: 50px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 20px; background: var(--card-bg); border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);}
+      th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
+      th { background-color: var(--primary); color: white; }
+      .profit { color: #38a169; font-weight: bold; }
+      .loss { color: #e53e3e; font-weight: bold; }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="nav-brand" onclick="switchView('home')">📈 BRVM Pro</div>
+      <div class="nav-links">
+        <button class="nav-btn active" onclick="switchView('home')" id="btn-home">Accueil</button>
+        <button class="nav-btn" onclick="switchView('topflop')" id="btn-topflop">Top / Flop</button>
+        <button class="nav-btn" onclick="switchView('sectors')" id="btn-sectors">Secteurs</button>
+        <button class="nav-btn" onclick="switchView('all')" id="btn-all">Palmarès</button>
+        <button class="nav-btn btn-advisor" onclick="switchView('advisor')" id="btn-advisor">🤖 IA</button>
+        <button class="nav-btn btn-portfolio" onclick="loadMyPortfolio()" id="btn-portfolio">💼 Mon Portefeuille</button>
+        <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+      </div>
+    </nav>
+    <div id="global-controls" class="global-controls">
+      <input type="text" id="globalSearch" placeholder="🔍 Rechercher..." onkeyup="renderCurrentView()">
+      <select id="periodSelect" onchange="fetchData()">
+        <option value="90">3 Mois</option>
+        <option value="180">6 Mois</option>
+        <option value="365" selected>1 An</option>
+      </select>
+    </div>
+    <div id="global-loader" class="loader">Connexion à l'API BRVM en cours...</div>
+    <main id="view-home" class="view-section">
+      <div class="hero">
+        <h1>Plateforme de Trading BRVM</h1>
+        <p>Gérez virtuellement votre capital, analysez les RSI et les dividendes, et laissez notre Robo-Advisor construire votre stratégie.</p>
+        <button class="btn-primary" onclick="switchView('advisor')">Créer un portefeuille</button>
+      </div>
+    </main>
+    <main id="view-topflop" class="view-section"><h2>🔥 Top 5 Opportunités</h2><div id="top5-container" class="grid-2"></div><h2>⚠️ Flop 5 (À surveiller)</h2><div id="flop5-container" class="grid-2"></div></main>
+    <main id="view-sectors" class="view-section"><div class="sector-selector-container"><select id="sectorDropdown" onchange="renderCurrentView()"></select></div><div id="single-sector-container" class="grid-2"></div></main>
+    <main id="view-all" class="view-section"><h2 style="margin-top: 0;">Marché Complet</h2><div id="all-container" class="grid-2"></div></main>
+    <main id="view-advisor" class="view-section">
+      <h2 style="margin-top: 0;">🤖 Robo-Advisor</h2>
+      <div class="advisor-form">
+        <div class="form-group"><label>Capital (FCFA)</label><input type="number" id="advBudget" value="500000"></div>
+        <div class="form-group"><label>Horizon</label><select id="advObj"><option value="CT">Spéculation (Court terme)</option><option value="LT" selected>Dividendes (Long terme)</option></select></div>
+        <div class="form-group"><label>Risque</label><select id="advRisk"><option value="low">Prudent</option><option value="med" selected>Équilibré</option></select></div>
+        <button class="advisor-btn" onclick="generatePortfolio()">Simuler</button>
+      </div>
+      <div id="advisor-result"></div>
+    </main>
+    <main id="view-portfolio" class="view-section"><h2 style="margin-top: 0;">💼 Mon Portefeuille (Local)</h2><div id="portfolio-content"></div></main>
+
+    <script>
+      // ⚠️ REMPLACE CETTE LIGNE PAR L'URL QUE GOOGLE APPS SCRIPT T'A DONNÉE ⚠️
+      const API_URL = "https://script.google.com/macros/s/AKfycby7gE9OyUD-gSm0z-gqaZr3_wU1E5X4Md5yYQIoecujQ0J3vXBg6HxS07w047PIqe9qPw/exec";
+
+      let allData = [];
+      let chartInstances = {}; 
+      let isDarkMode = false;
+      let currentViewId = 'home';
+      let proposedPortfolio = [];
+
+      window.onload = () => fetchData();
+
+      // NOUVEAU : On utilise Fetch API (Javascript Standard) au lieu de google.script.run
+      function fetchData() {
+        document.getElementById('global-loader').style.display = 'block';
+        const period = document.getElementById('periodSelect').value;
+        
+        fetch(`${API_URL}?period=${period}`, { redirect: "follow" })
+          .then(response => response.json())
+          .then(data => {
+            allData = data;
+            document.getElementById('global-loader').style.display = 'none';
+            populateSectorDropdown(); 
+            if (currentViewId === 'home') switchView('home'); else renderCurrentView();
+          })
+          .catch(error => {
+            document.getElementById('global-loader').innerHTML = `<span style="color:red">Erreur de connexion API : ${error.message}</span>`;
+          });
+      }
+
+      function populateSectorDropdown() {
+        const select = document.getElementById('sectorDropdown');
+        if (select.options.length > 0) return;
+        [...new Set(allData.map(item => item.secteur))].sort().forEach(sec => select.add(new Option(sec, sec)));
+      }
+
+      function switchView(viewId) {
+        currentViewId = viewId;
+        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(`view-${viewId}`).classList.add('active');
+        document.getElementById(`btn-${viewId}`).classList.add('active');
+        document.getElementById('global-controls').style.display = (viewId === 'home' || viewId === 'advisor' || viewId === 'portfolio') ? 'none' : 'flex';
+        if (viewId !== 'home' && viewId !== 'advisor' && viewId !== 'portfolio') renderCurrentView();
+      }
+
+      function toggleTheme() {
+        isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode);
+        document.getElementById('themeBtn').innerText = isDarkMode ? '☀️' : '🌙';
+        if (currentViewId !== 'home' && currentViewId !== 'advisor' && currentViewId !== 'portfolio') renderCurrentView();
+      }
+
+      function renderCurrentView() {
+        const query = document.getElementById('globalSearch').value.toLowerCase();
+        const fData = allData.filter(i => i.ticker.toLowerCase().includes(query) || i.sigle.toLowerCase().includes(query));
+        if (currentViewId === 'topflop') {
+          renderCardsHTML(fData.slice(0, 5), 'top5-container', 'top');
+          renderCardsHTML(fData.length > 5 ? fData.slice(-5).reverse() : [], 'flop5-container', 'flop');
+        } else if (currentViewId === 'sectors') {
+            renderCardsHTML(fData.filter(i => i.secteur === document.getElementById('sectorDropdown').value), 'single-sector-container', 'sec');
+        } else if (currentViewId === 'all') {
+            renderCardsHTML(fData, 'all-container', 'all');
+        }
+      }
+
+      function calculateRSI(prices, period = 14) {
+        let rsi = new Array(prices.length).fill(null);
+        if (prices.length < period + 1) return rsi;
+        let gains = 0, losses = 0;
+        for (let i = 1; i <= period; i++) {
+          let change = prices[i] - prices[i - 1];
+          if (change > 0) gains += change; else losses -= change;
+        }
+        let avgGain = gains / period; let avgLoss = losses / period;
+        rsi[period] = avgLoss === 0 ? 100 : 100 - (100 / (1 + avgGain / avgLoss));
+        for (let i = period + 1; i < prices.length; i++) {
+          let change = prices[i] - prices[i - 1];
+          avgGain = (avgGain * (period - 1) + (change > 0 ? change : 0)) / period;
+          avgLoss = (avgLoss * (period - 1) + (change < 0 ? -change : 0)) / period;
+          rsi[i] = avgLoss === 0 ? 100 : 100 - (100 / (1 + avgGain / avgLoss));
+        }
+        return rsi;
+      }
+
+      function generatePortfolio() {
+        const budget = parseFloat(document.getElementById('advBudget').value);
+        const obj = document.getElementById('advObj').value;
+        const resultDiv = document.getElementById('advisor-result');
+        if (!budget) return;
+
+        resultDiv.innerHTML = '<div class="loader">Calcul IA en cours...</div>';
+        proposedPortfolio = []; 
+
+        setTimeout(() => {
+          let scoredStocks = allData.map(item => {
+            const currentPrice = item.prices[item.prices.length - 1];
+            let customScore = item.score;
+            if (obj === 'LT' && item.dividend > 6) customScore += 3;
+            if (obj === 'CT') customScore += ((currentPrice - item.prices[Math.max(0, item.prices.length - 10)]) / currentPrice) * 100;
+            return { ...item, currentPrice, customScore };
+          }).sort((a, b) => b.customScore - a.customScore);
+
+          const selection = scoredStocks.slice(0, 4);
+          const weights = [0.40, 0.30, 0.20, 0.10]; 
+          let totalSpent = 0; let htmlCards = '';
+
+          selection.forEach((item, index) => {
+            const sharesToBuy = Math.floor((budget * weights[index]) / item.currentPrice); 
+            const realCost = sharesToBuy * item.currentPrice;
+            totalSpent += realCost;
+
+            if (sharesToBuy > 0) {
+                proposedPortfolio.push({ sigle: item.sigle, nom: item.ticker, shares: sharesToBuy, buyPrice: item.currentPrice, total: realCost });
+                htmlCards += `
+                <div class="card">
+                  <div class="header"><span class="ticker">${item.ticker}</span></div>
+                  <ul><li>Cours : <strong>${item.currentPrice} FCFA</strong></li><li>Dividende : <strong style="color:#38a169">${item.dividend}%</strong></li><li>Alloué : <strong style="color:#3182ce;">${sharesToBuy} actions</strong></li></ul>
+                </div>`;
+            }
+          });
+
+          resultDiv.innerHTML = `<div class="summary-box">Investissement : <span>${totalSpent.toFixed(0)} FCFA</span></div><div class="grid-2">${htmlCards}</div><button class="save-btn" onclick="saveMyPortfolio()">💾 Sauvegarder localement</button>`;
+        }, 500);
+      }
+
+      // NOUVEAU : Sauvegarde ultra rapide via localStorage (Totalement anonyme et sans Google Auth)
+      function saveMyPortfolio() {
+        document.getElementById('advisor-result').innerHTML = '<div class="loader">Sauvegarde sur votre navigateur...</div>';
+        localStorage.setItem('brvm_portfolio', JSON.stringify(proposedPortfolio));
+        setTimeout(() => loadMyPortfolio(), 500);
+      }
+
+      function loadMyPortfolio() {
+        switchView('portfolio');
+        document.getElementById('portfolio-content').innerHTML = '<div class="loader">Chargement...</div>';
+        setTimeout(() => {
+          const savedData = JSON.parse(localStorage.getItem('brvm_portfolio') || '[]');
+          renderPortfolioTable(savedData);
+        }, 200);
+      }
+
+      function renderPortfolioTable(savedData) {
+        const container = document.getElementById('portfolio-content');
+        if (!savedData || savedData.length === 0) {
+          container.innerHTML = '<div class="no-data">Vous n\'avez pas encore sauvegardé de portefeuille.</div>';
+          return;
+        }
+
+        let totalInvested = 0; let totalCurrent = 0; let trs = '';
+
+        savedData.forEach(pos => {
+          const liveData = allData.find(d => d.sigle === pos.sigle);
+          const currentPrice = liveData ? liveData.prices[liveData.prices.length - 1] : pos.buyPrice;
+          const currentTotal = pos.shares * currentPrice;
+          const profit = currentTotal - pos.total;
+          
+          totalInvested += pos.total; totalCurrent += currentTotal;
+          const pClass = profit >= 0 ? 'profit' : 'loss';
+          const pSign = profit >= 0 ? '+' : '';
+
+          trs += `<tr><td><strong>${pos.sigle}</strong><br><span style="font-size:0.8em; color:var(--text-muted)">${pos.nom}</span></td><td>${pos.shares}</td><td>${pos.buyPrice} FCFA</td><td>${currentPrice} FCFA</td><td class="${pClass}">${pSign}${profit.toFixed(0)} FCFA</td></tr>`;
+        });
+
+        const globalProfit = totalCurrent - totalInvested;
+        const gpClass = globalProfit >= 0 ? 'profit' : 'loss';
+
+        container.innerHTML = `<div class="summary-box" style="background:var(--card-bg); color:var(--text-color); border:1px solid var(--border-color)">Valeur du portefeuille : <span>${totalCurrent.toFixed(0)} FCFA</span><br>Plus-value latente : <span class="${gpClass}">${globalProfit >= 0 ? '+' : ''}${globalProfit.toFixed(0)} FCFA</span></div><table><thead><tr><th>Action</th><th>Qté</th><th>PRU</th><th>Actuel</th><th>+/- Value</th></tr></thead><tbody>${trs}</tbody></table>`;
+      }
+
+      function renderCardsHTML(dataList, containerId, prefix) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        if (dataList.length === 0) return;
+
+        const axisColor = isDarkMode ? '#a0aec0' : '#718096';
+        const gridColor = isDarkMode ? '#4a5568' : '#e2e8f0';
+
+        dataList.forEach(item => {
+          let scoreClass = 'score-low'; let chartColor = '#e53e3e';
+          if (item.score >= 7) { scoreClass = 'score-high'; chartColor = '#38a169'; } 
+          else if (item.score >= 5) { scoreClass = 'score-mid'; chartColor = '#d69e2e'; } 
+
+          const rsiData = calculateRSI(item.prices);
+          const currentRsi = rsiData[rsiData.length - 1];
+          let rsiText = "Neutre";
+          if (currentRsi > 70) rsiText = "<span style='color:#e53e3e'>Suracheté</span>";
+          if (currentRsi < 30) rsiText = "<span style='color:#38a169'>Survendu</span>";
+
+          const canvasId = `chart-${prefix}-${item.sigle}`;
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `<div class="header"><span class="ticker">${item.ticker} <span style="font-size:0.8em; font-weight:normal; color:var(--text-muted);">(${item.sigle}) | RSI: ${currentRsi.toFixed(0)} - ${rsiText}</span></span><span class="score ${scoreClass}">${item.score}/10</span></div><div class="argument">${item.argument}</div><div class="chart-container"><canvas id="${canvasId}"></canvas></div>`;
+          container.appendChild(card);
+
+          if(chartInstances[canvasId]) chartInstances[canvasId].destroy();
+
+          const maxVolume = Math.max(...item.volumes.filter(v => v > 0));
+          const ctx = document.getElementById(canvasId).getContext('2d');
+          chartInstances[canvasId] = new Chart(ctx, {
+            type: 'line', 
+            data: {
+              labels: item.labels,
+              datasets: [
+                { type: 'line', label: 'Prix', data: item.prices, borderColor: chartColor, backgroundColor: chartColor + '15', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.1, yAxisID: 'y', order: 1 },
+                { type: 'line', label: 'SMA 20j', data: item.sma, borderColor: isDarkMode ? '#63b3ed' : '#2b6cb0', borderWidth: 2, borderDash: [4, 4], pointRadius: 0, fill: false, tension: 0.1, yAxisID: 'y', order: 2 },
+                { type: 'line', label: 'RSI 14', data: rsiData, borderColor: '#9f7aea', borderWidth: 1.5, borderDash: [2, 2], pointRadius: 0, fill: false, tension: 0.1, yAxisID: 'yRsi', order: 3 },
+                { type: 'bar', label: 'Volume', data: item.volumes, backgroundColor: isDarkMode ? '#cbd5e030' : '#71809690', yAxisID: 'y1', order: 4 }
+              ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: axisColor, maxTicksLimit: 5 }, grid: { color: gridColor } }, y: { type: 'linear', position: 'left', ticks: { color: axisColor }, grid: { color: gridColor } }, y1: { type: 'linear', display: false, position: 'right', suggestedMax: maxVolume * 3, grid: { drawOnChartArea: false } }, yRsi: { type: 'linear', display: false, position: 'right', min: 0, max: 100 } } }
+          });
+        });
+      }
+    </script>
+  </body>
+</html>
